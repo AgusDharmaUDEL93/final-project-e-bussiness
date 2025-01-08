@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load data files
-@st.cache
+@st.cache_data
 def load_data():
     features_path = 'features.csv'
     stores_path = 'stores.csv'
@@ -111,6 +111,8 @@ ax.set_xlabel('Weekly Sales')
 ax.set_ylabel('Frequency')
 st.pyplot(fig)
 
+st.write(df_train_full['Weekly_Sales'].describe())
+
 # 2. Average Weekly Sales by Store
 st.write("#### 2. Average Weekly Sales by Store")
 st.write("This bar chart displays the average weekly sales for each store, helping to identify the best-performing stores.")
@@ -122,27 +124,48 @@ ax.set_xlabel('Store')
 ax.set_ylabel('Average Weekly Sales')
 st.pyplot(fig)
 
-# 3. Weekly Sales Over Time
-st.write("#### 3. Weekly Sales Over Time")
-st.write("This line chart illustrates the trend of weekly sales over time, providing insights into seasonal patterns.")
+st.write(df_train_full.groupby('Store')['Weekly_Sales'].mean().sort_values(ascending=False))
+
+# 4. Impact of Holiday Weeks on Weekly Sales
+st.write("#### 4. Impact of Holiday Weeks on Weekly Sales")
+st.write("This analysis aims to understand whether there is a significant increase in sales during holiday weeks.")
+
+# Calculate average sales for holiday and non-holiday weeks
+holiday_sales = df_train_full[df_train_full['IsHoliday'] == True]['Weekly_Sales'].mean()
+non_holiday_sales = df_train_full[df_train_full['IsHoliday'] == False]['Weekly_Sales'].mean()
+
+# Create bar chart for visualization
 fig, ax = plt.subplots()
-df_full_c['Weekly_Sales'].plot(ax=ax, color='blue')
-ax.set_title('Weekly Sales Over Time')
+ax.bar(['Non-Holiday Weeks', 'Holiday Weeks'], [non_holiday_sales, holiday_sales], color=['blue', 'orange'])
+ax.set_title('Average Weekly Sales During Holiday vs Non-Holiday Weeks')
+ax.set_ylabel('Average Weekly Sales')
+st.pyplot(fig)
+
+st.write(f"**Average weekly sales during holiday weeks:** ${holiday_sales:,.2f}")
+st.write(f"**Average weekly sales during non-holiday weeks:** ${non_holiday_sales:,.2f}")
+
+# 5. Weekly Sales Patterns by Store Type
+st.write("#### 5. Weekly Sales Patterns by Store Type")
+st.write("This analysis explores whether different store types (A, B, C) exhibit different weekly sales patterns.")
+
+# Group by store type and date for visualization
+store_type_sales = df_train_full.groupby(['Type', 'Date'])['Weekly_Sales'].mean().reset_index()
+
+# Group by store type for average weekly sales
+average_sales_by_store_type = df_train_full.groupby('Type')['Weekly_Sales'].mean().reset_index()
+average_sales_by_store_type.columns = ['Store Type', 'Average Weekly Sales']
+
+# Create line chart for each store type
+fig, ax = plt.subplots()
+for store_type in store_type_sales['Type'].unique():
+    data = store_type_sales[store_type_sales['Type'] == store_type]
+    ax.plot(data['Date'], data['Weekly_Sales'], label=f'Store Type {store_type}')
+ax.set_title('Average Weekly Sales by Store Type')
 ax.set_xlabel('Date')
-ax.set_ylabel('Weekly Sales')
+ax.set_ylabel('Average Weekly Sales')
+ax.legend()
 st.pyplot(fig)
 
-# 4. Sales Trend Decomposition
-st.write("#### 4. Sales Trend Decomposition")
-st.write("Using seasonal decomposition, this plot separates the sales data into trend, seasonal, and residual components.")
-results = STL(df_full_c['Weekly_Sales']).fit()
-fig = results.plot()
-st.pyplot(fig)
-
-# 5. Pair Plot Analysis
-st.write("#### 5. Pair Plot Analysis")
-st.write("This pair plot visualizes the relationships between key variables, such as sales, temperature, fuel price, CPI, and unemployment.")
-pairplot_columns = ['Weekly_Sales', 'Temperature', 'Fuel_Price', 'CPI', 'Unemployment']
-pairplot_data = df_train_full[pairplot_columns].dropna()
-fig = sns.pairplot(pairplot_data, diag_kind='kde')
-st.pyplot(fig)
+# Display the average weekly sales by store type as a table
+st.write("#### Average Weekly Sales by Store Type (Table)")
+st.write(average_sales_by_store_type)
