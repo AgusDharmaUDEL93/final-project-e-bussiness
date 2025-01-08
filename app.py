@@ -70,8 +70,7 @@ y = df_full_c['Weekly_Sales']
 
 # Split Data
 train_size = int(len(X) * 0.8)
-X_train, X_git remote add origin git@github.com:AgusDharmaUDEL93/final-project-e-bussiness.git
- = X[:train_size], X[train_size:]
+X_train, X_test = X[:train_size], X[train_size:]
 y_train, y_test = y[:train_size], y[train_size:]
 
 # Train Model
